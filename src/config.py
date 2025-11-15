@@ -47,3 +47,15 @@ class Settings(BaseSettings):
 
     FAISS_TOP_K: int = 5
 
+    # Open AI API settings
+    OPENAI_API_KEY: Union[SecretStr, None] = None
+
+    # Evaluation settings
+    EVALUATION_SAMPLE_SIZE: int = 10
+    EVALUATION_OUTPUT_DIR: str = str(BASE_DIR / "evaluation_results")
+    EVALUATION_RANDOM_SEED: int = 123
+
+    # Logging settings
+    LOGGING_LEVEL: str = "INFO"
+    LOGGING_FILE: str = str(BASE_DIR / "logs" / "preprocessing.log")
+
