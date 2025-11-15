@@ -59,3 +59,13 @@ class Settings(BaseSettings):
     LOGGING_LEVEL: str = "INFO"
     LOGGING_FILE: str = str(BASE_DIR / "logs" / "preprocessing.log")
 
+    # Ensure that the data directory exists
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        os.makedirs(self.DATA_DIR, exist_ok=True)
+        os.makedirs(self.INDEX_DIR, exist_ok=True)
+        os.makedirs(self.BASE_DIR / "logs", exist_ok=True)
+        os.makedirs(self.EVALUATION_OUTPUT_DIR, exist_ok=True)
+
+
+settings = Settings()
