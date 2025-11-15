@@ -32,3 +32,18 @@ class Settings(BaseSettings):
 
     # Kaggle settings
 
+    # Embeddings settings
+    EMBEDDINGS_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+    # LLM settings
+    LLM_MODEL_NAME: str = "gpt-4o-mini"
+    LLM_TEMPERATURE: float = 0
+    LLM_MAX_TOKENS: int = 100
+
+    # Local LLM settings
+    OLLAMA_MODEL_NAME: str = "llama3.2:3b"
+
+    FAISS_INDEX_PATH: str = str(INDEX_DIR / "faiss_index.faiss")
+
+    FAISS_TOP_K: int = 5
+
