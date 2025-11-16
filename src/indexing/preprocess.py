@@ -75,3 +75,15 @@ def create_faiss_index(documents: list[Document]) -> None:
         logger.info(f"New index saved to {index_path}")
 
 
+def embed_and_index():
+    """Embed and index the dataset."""
+    # Download and preprocess the dataset
+    customer_care_df = download_and_preprocess_dataset()
+
+    # Generate documents
+    documents = generate_documents(customer_care_df)
+
+    # Create or update the FAISS index
+    create_faiss_index(documents)
+
+
