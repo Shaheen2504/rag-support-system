@@ -31,3 +31,17 @@ def download_and_preprocess_dataset() -> pl.DataFrame:
     return customer_care_df
 
 
+def generate_documents(customer_care_df: pl.DataFrame) -> list[Document]:
+    """Generate documents from a Polars DataFrame."""
+    documents = [
+        Document(
+            page_content=row["question"],
+            metadata=row,
+            id=idx,
+        )
+        for idx, row in enumerate(customer_care_df.to_dicts())
+    ]
+    logger.info(f"Generated {len(documents)} documents.")
+    return documents
+
+
