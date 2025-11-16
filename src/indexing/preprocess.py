@@ -45,3 +45,33 @@ def generate_documents(customer_care_df: pl.DataFrame) -> list[Document]:
     return documents
 
 
+def create_faiss_index(documents: list[Document]) -> None:
+    """Create or update FAISS index, avoiding duplicates."""
+    embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDINGS_MODEL_NAME)
+    index_path = settings.FAISS_INDEX_PATH
+
+    if os.path.exists(index_path):
+        # Load existing index
+        logger.info("Loading existing FAISS index...")
+        faiss_index = FAISS.load_local(
+            index_path, embeddings, allow_dangerous_deserialization=True
+        )
+        # Get existing document IDs
+        existing_ids = set(faiss_index.index_to_docstore_id.values())
+        # Filter new documents
+        new_docs = [doc for doc in documents if doc.id not in existing_ids]
+        if new_docs:
+            logger.info(f"Adding {len(new_docs)} new documents.")
+            faiss_index.add_documents(new_docs)
+            faiss_index.save_local(index_path)
+            logger.info(f"Updated index saved to {index_path}")
+        else:
+            logger.info("No new documents to add.")
+    else:
+        # Create new index
+        logger.info("Creating new FAISS index...")
+        faiss_index = FAISS.from_documents(documents, embeddings)
+        faiss_index.save_local(index_path)
+        logger.info(f"New index saved to {index_path}")
+
+
