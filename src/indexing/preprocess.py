@@ -87,3 +87,5 @@ def embed_and_index():
     create_faiss_index(documents)
 
 
+if __name__ == "__main__":
+    embed_and_index()
