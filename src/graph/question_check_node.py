@@ -16,3 +16,14 @@ torch.set_float32_matmul_precision("high")
 torch._inductor.config.fx_graph_cache = True
 
 
+def scan_prompt_injection(state: AgentState) -> Dict[str, Any]:
+    """
+    Scan the input question.
+    """
+    question = state["question"]
+
+    _, results_valid, _ = scan_prompt([PromptInjection(use_onnx=True)], question)
+    safe_question = not results_valid.get("PromptInjection", True)
+    return {"question_status": [1 if safe_question else 0]}
+
+
