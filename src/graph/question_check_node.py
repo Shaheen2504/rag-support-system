@@ -27,3 +27,13 @@ def scan_prompt_injection(state: AgentState) -> Dict[str, Any]:
     return {"question_status": [1 if safe_question else 0]}
 
 
+def scan_toxicity(state: AgentState) -> Dict[str, Any]:
+    """
+    Scan the input question.
+    """
+    question = state["question"]
+    _, results_valid, _ = scan_prompt([Toxicity(use_onnx=True)], question)
+    toxic_question = not results_valid.get("Toxicity", True)
+    return {"question_status": [1 if toxic_question else 0]}
+
+
