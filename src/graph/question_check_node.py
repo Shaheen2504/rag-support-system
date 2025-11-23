@@ -37,3 +37,13 @@ def scan_toxicity(state: AgentState) -> Dict[str, Any]:
     return {"question_status": [1 if toxic_question else 0]}
 
 
+def scan_token_limit(state: AgentState) -> Dict[str, Any]:
+    """
+    Scan the token limit.
+    """
+    question = state["question"]
+    _, results_valid, _ = scan_prompt([TokenLimit(limit=200)], question)
+    token_limit_exceeded = not results_valid.get("TokenLimit", True)
+    return {"question_status": [1 if token_limit_exceeded else 0]}
+
+
