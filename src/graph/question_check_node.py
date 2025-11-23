@@ -47,3 +47,17 @@ def scan_token_limit(state: AgentState) -> Dict[str, Any]:
     return {"question_status": [1 if token_limit_exceeded else 0]}
 
 
+def question_check_node(state: AgentState) -> Dict[str, Any]:
+    """
+    Scan and validate the input question.
+    """
+    question_status = state["question_status"]
+    all_checks_passed = all(status == 0 for status in question_status[-3:])
+    if all_checks_passed:
+        return {"question": state["question"], "question_valid": True}
+    return {
+        "llm_output": "Question failed checks, please try again.",
+        "question_valid": False,
+    }
+
+
