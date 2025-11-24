@@ -20,3 +20,35 @@ class GradeTopic(BaseModel):
 
 
 @lru_cache(maxsize=100)
+def classify_topic(question: str, local_llm: bool = True) -> Dict[str, Any]:
+    system = """You are a grader assessing whether a user's question is related to customer support 
+    for a product or a purchase.
+    Customer support topics include:
+    - Questions about purchasing products (e.g., "How do I place an order?")
+    - Questions about order cancellations (e.g., "Can I cancel my order?")
+    - Questions about refunds or returns (e.g., "How do I request a refund?")
+    - Questions about product issues (e.g., "My product is not working.")
+    - Questions about account issues (e.g., "I can't log in to my account.")
+
+    If the question is about customer support, respond with "Yes". Otherwise, respond with "No".
+    """
+
+    grade_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system),
+            ("human", "User question: {question}"),
+        ]
+    )
+
+    if local_llm:
+        llm = ChatOllama(
+            model=settings.OLLAMA_MODEL_NAME,
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS,
+        )
+    else:
+        llm = ChatOpenAI(
+            model=settings.LLM_MODEL_NAME,
+            api_key=settings.OPENAI_API_KEY.get_secret_value(),
+        )
+
