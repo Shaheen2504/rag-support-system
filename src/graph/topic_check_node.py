@@ -59,3 +59,18 @@ def classify_topic(question: str, local_llm: bool = True) -> Dict[str, Any]:
     return result
 
 
+def topic_classifier(state: AgentState):
+    """Classify the topic of the question."""
+    question = state["question"]
+    result = classify_topic(question)
+    print(result)
+
+    # Default to "on topic" if confidence is low
+    # state["on_topic"] = result.score
+    if result.score == "Yes":
+        return {"on_topic": "Yes"}
+    else:
+        return {
+            "on_topic": "No",
+            "llm_output": "Please ask a question about customer support so I can help you better.",
+        }
