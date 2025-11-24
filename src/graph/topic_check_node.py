@@ -52,3 +52,10 @@ def classify_topic(question: str, local_llm: bool = True) -> Dict[str, Any]:
             api_key=settings.OPENAI_API_KEY.get_secret_value(),
         )
 
+    # Use structured output for better results
+    structured_llm = llm.with_structured_output(GradeTopic)
+    grader_llm = grade_prompt | structured_llm
+    result = grader_llm.invoke({"question": question})
+    return result
+
+
