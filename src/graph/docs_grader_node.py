@@ -50,3 +50,12 @@ def retrieval_grader(doc: str, question: str, local_llm: bool = True):
     return grader_output.score
 
 
+def grade_documents_node(state: AgentState):
+    docs = state["documents"]
+    question = state["question"]
+    filtered_docs = []
+    for doc in docs:
+        grade = retrieval_grader(doc, question)
+        if grade.lower() == "yes":
+            filtered_docs.append(doc)
+    return {"documents": filtered_docs}
