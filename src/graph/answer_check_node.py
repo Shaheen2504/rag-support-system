@@ -15,3 +15,14 @@ relevance_scanner = Relevance(use_onnx=True)
 sentiment_scanner = Sentiment()
 
 
+def check_language_same(state: AgentState) -> Dict[str, Any]:
+    """Run LanguageSame check."""
+    output = state["llm_output"]
+    prompt = state["prompt"]
+    _, results_valid, _ = scan_output(
+        scanners=[language_same_scanner], output=output, prompt=prompt
+    )
+    same_language = not results_valid.get("LanguageSame", True)
+    return {"answer_status": [1 if same_language else 0]}
+
+
