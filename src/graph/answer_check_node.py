@@ -26,3 +26,14 @@ def check_language_same(state: AgentState) -> Dict[str, Any]:
     return {"answer_status": [1 if same_language else 0]}
 
 
+def check_relevance(state: AgentState) -> Dict[str, Any]:
+    """Run Relevance check"""
+    output = state["llm_output"]
+    prompt = state["prompt"]
+    _, results_valid, _ = scan_output(
+        scanners=[relevance_scanner], output=output, prompt=prompt
+    )
+    relevant_answer = not results_valid.get("Relevance", True)
+    return {"answer_status": [1 if relevant_answer else 0]}
+
+
