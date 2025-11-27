@@ -36,3 +36,9 @@ def generate_answer(question: str, context: list, local_llm: bool = True):
     return result, formatted_prompt
 
 
+def answer_node(state: AgentState):
+    """Generate answer node"""
+    question = state["question"]
+    context = state["documents"]
+    answer, prompt = generate_answer(question, context)
+    return {"llm_output": answer, "prompt": prompt}
