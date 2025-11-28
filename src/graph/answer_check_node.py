@@ -37,3 +37,14 @@ def check_relevance(state: AgentState) -> Dict[str, Any]:
     return {"answer_status": [1 if relevant_answer else 0]}
 
 
+def check_sentiment(state: AgentState) -> Dict[str, Any]:
+    """Run Sentiment check"""
+    output = state["llm_output"]
+    prompt = state["prompt"]
+    _, results_valid, _ = scan_output(
+        scanners=[sentiment_scanner], output=output, prompt=prompt
+    )
+    sentiment = not results_valid.get("Sentiment", True)
+    return {"answer_status": [1 if sentiment else 0]}
+
+
