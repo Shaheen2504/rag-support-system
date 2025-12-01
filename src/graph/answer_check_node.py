@@ -60,3 +60,37 @@ def answer_check_node(state: AgentState) -> Dict[str, Any]:
     return {"llm_output": "Answer failed checks, please try again."}
 
 
+if __name__ == "__main__":
+    state = {"llm_output": "Hello, how can I assist you today?", "prompt": "Hello"}
+    check_language_same(state)
+
+    state2 = {
+        "llm_output": "Bonjour, comment puis-je vous aider aujourd'hui?",
+        "prompt": "Hello",
+    }
+    check_language_same(state2)
+
+    # check relevance with non relevant example
+    state3 = {
+        "llm_output": "Hello, how can I assist you today?",
+        "prompt": "What is the weather today?",
+    }
+    check_relevance(state3)
+
+    # check relevance with relevant example
+    state4 = {
+        "llm_output": "The weather today is sunny.",
+        "prompt": "What is the weather today?",
+    }
+    check_relevance(state4)
+
+    # check toxicity with toxic example
+    state5 = {"llm_output": "You are an idiot.", "prompt": "What is the weather today?"}
+    check_sentiment(state5)
+
+    # check toxicity with non toxic example
+    state6 = {
+        "llm_output": "Hello, how can I assist you today?",
+        "prompt": "What is the weather today?",
+    }
+    check_sentiment(state6)
