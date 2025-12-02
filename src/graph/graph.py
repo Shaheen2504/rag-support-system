@@ -45,3 +45,9 @@ def create_workflow(retriever):
         "scan_token_limit",
         scan_token_limit,
     )
+    workflow.add_node("question_check_node", question_check_node)
+    workflow.add_conditional_edges(
+        "question_check_node",
+        lambda state: state["question_valid"],
+        {True: "topic_classifier", False: END},
+    )
