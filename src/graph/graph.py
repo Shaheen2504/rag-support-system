@@ -33,3 +33,15 @@ set_debug(True)
 def create_workflow(retriever):
     """Create a workflow."""
     workflow = StateGraph(AgentState)
+    workflow.add_node(
+        "scan_prompt_injection",
+        scan_prompt_injection,
+    )
+    workflow.add_node(
+        "scan_toxicity",
+        scan_toxicity,
+    )
+    workflow.add_node(
+        "scan_token_limit",
+        scan_token_limit,
+    )
