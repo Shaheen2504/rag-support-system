@@ -51,3 +51,12 @@ def create_workflow(retriever):
         lambda state: state["question_valid"],
         {True: "topic_classifier", False: END},
     )
+    workflow.add_node("topic_classifier", topic_classifier)
+    workflow.add_conditional_edges(
+        "topic_classifier",
+        lambda state: state["on_topic"],
+        {
+            "Yes": "retrieve_docs",
+            "No": END,
+        },
+    )
