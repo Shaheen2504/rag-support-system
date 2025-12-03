@@ -69,3 +69,19 @@ def create_workflow(retriever):
 
     workflow.add_node("generate_answer", answer_node)
 
+    workflow.add_edge(START, "scan_prompt_injection")
+    workflow.add_edge(START, "scan_toxicity")
+    workflow.add_edge(START, "scan_token_limit")
+    workflow.add_edge("scan_prompt_injection", "question_check_node")
+    workflow.add_edge("scan_toxicity", "question_check_node")
+    workflow.add_edge("scan_token_limit", "question_check_node")
+    workflow.add_edge("retrieve_docs", "docs_grader")
+    workflow.add_edge("docs_grader", "generate_answer")
+    workflow.add_edge("generate_answer", "check_language_same")
+    workflow.add_edge("generate_answer", "check_relevance")
+    workflow.add_edge("generate_answer", "check_sentiment")
+    workflow.add_edge("check_language_same", "answer_check_node")
+    workflow.add_edge("check_relevance", "answer_check_node")
+    workflow.add_edge("check_sentiment", "answer_check_node")
+    workflow.add_edge("answer_check_node", END)
+
