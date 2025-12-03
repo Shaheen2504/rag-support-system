@@ -60,3 +60,12 @@ def create_workflow(retriever):
             "No": END,
         },
     )
+    workflow.add_node("retrieve_docs", partial(retrieve, faiss_retriever=retriever))
+    workflow.add_node("docs_grader", grade_documents_node)
+    workflow.add_node("check_language_same", check_language_same)
+    workflow.add_node("check_relevance", check_relevance)
+    workflow.add_node("check_sentiment", check_sentiment)
+    workflow.add_node("answer_check_node", answer_check_node)
+
+    workflow.add_node("generate_answer", answer_node)
+
