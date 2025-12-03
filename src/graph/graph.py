@@ -85,3 +85,7 @@ def create_workflow(retriever):
     workflow.add_edge("check_sentiment", "answer_check_node")
     workflow.add_edge("answer_check_node", END)
 
+    graph = workflow.compile()
+    return graph
+
+
