@@ -25,3 +25,25 @@ class Question(BaseModel):
 
 api_context = {}
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Async context manager to handle the lifespan events of the FastAPI application."""
+    try:
+        # Load the FAISS index
+        faisss_index = load_faiss_index()
+        # Create the workflow
+        logger.info("Creating the workflow...")
+        api_context["workflow"] = create_workflow(faisss_index)
+        yield
+    except Exception:
+        logger.exception("Failed to load FAISS index and create the workflow.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load FAISS index and create the workflow.",
+        )
+    del faisss_index
+    del api_context["workflow"]
+    logger.info("Workflow deleted.")
+
+
