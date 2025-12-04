@@ -89,3 +89,18 @@ def create_workflow(retriever):
     return graph
 
 
+if __name__ == "__main__":
+    # Load the FAISS index
+    faiss_retriever = load_faiss_index()
+
+    app = create_workflow(faiss_retriever)
+    app.get_graph().draw_mermaid_png(output_file_path="flow.png")
+
+    # Run the workflow
+
+    config = {"configurable": {"thread_id": 1}}
+
+    state1 = {"question": "What is the capital of France?"}
+    state2 = {"question": "I wnat to return a package"}
+    final_state1 = app.invoke(state1, config=config)
+    final_state2 = app.invoke(state2, config=config)
