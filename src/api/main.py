@@ -47,3 +47,17 @@ async def lifespan(app: FastAPI):
     logger.info("Workflow deleted.")
 
 
+app = FastAPI(title="Rag Graph API", version="0.1.0", lifespan=lifespan)
+
+
+static_path = os.path.join(os.path.dirname(__file__), "static")
+print(static_path)
+
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+
+@app.get("/")
+def read_root():
+    return FileResponse(static_path + "/index.html")
+
+
