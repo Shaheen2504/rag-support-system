@@ -86,3 +86,6 @@ async def answer(question: Question):
         )
 
 
+@app.get("/health")
+def health():
+    return JSONResponse(content={"status": "ok"})
