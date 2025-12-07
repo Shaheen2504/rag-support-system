@@ -61,3 +61,28 @@ def read_root():
     return FileResponse(static_path + "/index.html")
 
 
+@app.post("/answer")
+async def answer(question: Question):
+    """
+    Answer the question.
+
+    Args:
+        question (Question): The question.
+
+    Returns:
+        JSONResponse: The response.
+    """
+    try:
+        # Run the workflow
+        graph = api_context["workflow"]
+        state = graph.invoke({"question": question.question})
+        logger.info(f"Response: {state}")
+        return JSONResponse(content=state)
+    except Exception:
+        logger.exception("Failed to answer the question.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to answer the question.",
+        )
+
+
