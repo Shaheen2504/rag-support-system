@@ -38,3 +38,40 @@ input[type="text"] {
     font-size: 1rem;
 }
 
+button {
+    padding: 0.75rem 1.5rem;
+    background-color: #1976d2; /* Blue button */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #1565c0; /* Darker blue on hover */
+}
+
+.response-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-align: left;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.response-container p {
+    margin: 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.response-container p:last-child {
+    border-bottom: none;
+}
+
+/* Add a chatbot icon */
