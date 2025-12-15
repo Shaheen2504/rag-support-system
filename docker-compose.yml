@@ -13,3 +13,17 @@ services:
         "-c",
         "ollama serve & sleep 5 && ollama pull llama3.2:1b && wait",
       ]
+
+  data-indexing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m src.indexing.preprocess
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    volumes:
+      - ./data:/app/data
+
+  bot-api:
