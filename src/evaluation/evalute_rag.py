@@ -45,3 +45,43 @@ def prepare_evaluation_data(retriever, rag_app):
 
     logger.info(f"Processing {len(sampled_docs)} documents...")
 
+    # Build evaluation dataset
+    dataset = []
+    for i, doc in enumerate(sampled_docs, 1):
+        try:
+            query = doc.metadata.get("question", "")
+            reference = doc.metadata.get("answer", "")
+            thread_id = str(uuid4())
+
+            # Get relevant documents and generate answer
+            retrieved_docs = retriever.get_relevant_documents(query)
+            retrieved_contexts = [d.metadata for d in retrieved_docs]
+
+            cleaned_contexts = [
+                f"question: {d['question']}\nanswer: {d['answer']}"
+                for d in retrieved_contexts
+            ]
+
+            config = {"configurable": {"thread_id": thread_id}}
+            state = {"question": query}
+            response = rag_app.invoke(state, config=config)
+            response = response.get("llm_output", "")
+
+            dataset.append(
+                {
+                    "user_input": query,
+                    "retrieved_contexts": cleaned_contexts,
+                    "response": response,
+                    "reference": reference,
+                }
+            )
+
+            logger.info(f"Processed {i}/{len(sampled_docs)}")
+
+        except Exception as e:
+            logger.info(f"Error processing document {i}: {e}")
+            continue
+
+    return dataset
+
+
