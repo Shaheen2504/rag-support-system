@@ -21,3 +21,15 @@ from src.graph.graph import create_workflow
 from src.graph.utils import load_faiss_index
 
 
+def setup_components():
+    """Initialize all required components for RAG evaluation."""
+    input_scanners = [PromptInjection(), TokenLimit(), Toxicity()]
+    retriever = load_faiss_index()
+    rag_app = create_workflow(retriever, input_scanners=input_scanners)
+
+    llm = ChatOpenAI(model=settings.LLM_MODEL_NAME, temperature=0.0, max_tokens=1000)
+    evaluator_llm = LangchainLLMWrapper(llm)
+
+    return retriever, rag_app, evaluator_llm
+
+
