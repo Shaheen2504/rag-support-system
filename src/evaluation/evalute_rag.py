@@ -33,3 +33,15 @@ def setup_components():
     return retriever, rag_app, evaluator_llm
 
 
+def prepare_evaluation_data(retriever, rag_app):
+    """
+    Sample documents and create evaluation dataset.
+    """
+    # Load and sample documents
+    sample_size = settings.EVALUATION_SAMPLE_SIZE
+    random.seed(settings.EVALUATION_RANDOM_SEED)
+    documents = list(retriever.vectorstore.docstore._dict.values())
+    sampled_docs = random.sample(documents, min(sample_size, len(documents)))
+
+    logger.info(f"Processing {len(sampled_docs)} documents...")
+
