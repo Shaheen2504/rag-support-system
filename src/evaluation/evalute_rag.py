@@ -85,3 +85,18 @@ def prepare_evaluation_data(retriever, rag_app):
     return dataset
 
 
+def run_evaluation(dataset, evaluator_llm):
+    """Run RAGAS evaluation and display results."""
+    evaluation_dataset = EvaluationDataset.from_list(dataset)
+    metrics = [LLMContextRecall(), Faithfulness(), FactualCorrectness()]
+
+    logger.info("Running RAGAS evaluation...")
+    results = evaluate(
+        dataset=evaluation_dataset,
+        metrics=metrics,
+        llm=evaluator_llm,
+    )
+
+    # Convert results to DataFrame for better display
+    output_dir = settings.EVALUATION_OUTPUT_DIR
+    results_df = results.to_pandas()
