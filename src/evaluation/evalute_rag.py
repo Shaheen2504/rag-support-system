@@ -100,3 +100,12 @@ def run_evaluation(dataset, evaluator_llm):
     # Convert results to DataFrame for better display
     output_dir = settings.EVALUATION_OUTPUT_DIR
     results_df = results.to_pandas()
+    # Save evaluation results
+    results_html_path = os.path.join(output_dir, "evaluation_results.html")
+    results_df.to_html(results_html_path, index=False)
+    mean_scores = results_df.mean(numeric_only=True).round(4).to_frame(name="score")
+    mean_scores_path = os.path.join(output_dir, "mean_scores.html")
+    mean_scores.to_html(mean_scores_path)
+    logger.info(f"Evaluation results saved to {output_dir}")
+
+
