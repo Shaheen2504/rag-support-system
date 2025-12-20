@@ -109,3 +109,19 @@ def run_evaluation(dataset, evaluator_llm):
     logger.info(f"Evaluation results saved to {output_dir}")
 
 
+def main():
+    """Main evaluation pipeline."""
+    logger.info("Starting RAG evaluation...")
+
+    # Setup
+    retriever, rag_app, evaluator_llm = setup_components()
+
+    # Prepare data and evaluate
+    dataset = prepare_evaluation_data(retriever, rag_app)
+    run_evaluation(dataset, evaluator_llm)
+
+    logger.info("Evaluation completed!")
+
+
+if __name__ == "__main__":
+    main()
