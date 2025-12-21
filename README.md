@@ -4,3 +4,15 @@ A customer-support Q&A service built on **LangGraph**. Questions pass through in
 
 Stack: FastAPI · LangGraph / LangChain · FAISS · HuggingFace embeddings (`all-MiniLM-L6-v2`) · Ollama (default) or OpenAI · LLM Guard · Polars · ragas · Docker Compose.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Browser / client] -->|POST /answer| API[FastAPI<br/>src/api/main.py]
+    API --> G[LangGraph workflow<br/>src/graph/graph.py]
+    G --> F[(FAISS index<br/>data/indexes)]
+    G --> L[LLM<br/>Ollama or OpenAI]
+    G --> LG[LLM Guard scanners]
+    HF[(HuggingFace dataset<br/>Bitext customer support)] -->|src/indexing/preprocess.py| F
+```
+
