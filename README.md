@@ -41,3 +41,24 @@ flowchart TD
 
 The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `on_topic`, `documents`, `prompt`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
 
+## Request lifecycle
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as FastAPI
+    participant W as LangGraph
+    participant V as FAISS
+    participant M as LLM
+    C->>A: POST /answer {"question": "..."}
+    A->>W: graph.invoke({"question"})
+    W->>W: input scanners (LLM Guard)
+    W->>M: topic classification
+    W->>V: similarity search (k=5)
+    W->>M: grade each document
+    W->>M: generate answer from graded context
+    W->>W: output scanners (LLM Guard)
+    W-->>A: final state
+    A-->>C: JSON (llm_output, answer_valid, ...)
+```
+
