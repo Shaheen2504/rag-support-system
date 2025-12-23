@@ -66,3 +66,16 @@ sequenceDiagram
 
 `src/indexing/preprocess.py` downloads the Bitext dataset, renames `instruction`/`response` to `question`/`answer` and drops nulls. It then embeds each question as a document (keeping the Q&A pair as metadata) and writes the FAISS index to `data/indexes/faiss_index.faiss`. If the index already exists, only new document IDs are added.
 
+## Project structure
+
+```
+src/
+├── config.py              # pydantic-settings; all tunables live here
+├── api/                   # FastAPI app + static web UI (index.html, script.js, styles.css)
+├── graph/                 # LangGraph nodes, state, and workflow wiring
+├── indexing/preprocess.py # dataset download + FAISS index build
+└── evaluation/evalute_rag.py  # ragas evaluation
+data/                      # FAISS index (generated)
+evaluation_results/        # ragas HTML reports
+```
+
