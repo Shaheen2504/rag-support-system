@@ -103,3 +103,23 @@ Settings live in `src/config.py`, and any of them can be overridden from `.env`:
 | `EVALUATION_SAMPLE_SIZE` | `10` | ragas sample size |
 | `LANGCHAIN_API_KEY`, `LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT` | — | Optional LangSmith tracing |
 
+## Running
+
+```bash
+# 1. Build the index
+uv run python -m src.indexing.preprocess
+
+# 2. Start the API + web UI at http://localhost:8000
+uv run uvicorn src.api.main:app --reload
+
+# 3. Ask a question
+curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
+     -d '{"question": "I want to return a package"}'
+```
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Chat web UI |
+| `/answer` | POST | `{"question": str}` → final graph state as JSON |
+| `/health` | GET | `{"status": "ok"}` |
+
