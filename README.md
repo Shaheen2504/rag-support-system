@@ -89,3 +89,17 @@ cp .env.example .env              # add OPENAI_API_KEY if using OpenAI / evaluat
 ollama pull llama3.2:3b           # must match OLLAMA_MODEL_NAME in src/config.py
 ```
 
+### Configuration
+
+Settings live in `src/config.py`, and any of them can be overridden from `.env`:
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `OLLAMA_MODEL_NAME` | `llama3.2:3b` | Local LLM |
+| `LLM_MODEL_NAME` | `gpt-4o-mini` | OpenAI model when `local_llm=False` |
+| `LLM_MAX_TOKENS` | `100` | Max answer length for Ollama |
+| `EMBEDDINGS_MODEL_NAME` | `sentence-transformers/all-MiniLM-L6-v2` | Embeddings |
+| `FAISS_TOP_K` | `5` | Retrieved documents |
+| `EVALUATION_SAMPLE_SIZE` | `10` | ragas sample size |
+| `LANGCHAIN_API_KEY`, `LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT` | — | Optional LangSmith tracing |
+
