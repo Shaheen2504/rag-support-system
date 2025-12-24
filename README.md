@@ -79,3 +79,13 @@ data/                      # FAISS index (generated)
 evaluation_results/        # ragas HTML reports
 ```
 
+## Setup
+
+Requires Python 3.12 and [uv](https://docs.astral.sh/uv/) (or pip with `requirements.txt`), plus [Ollama](https://ollama.com/) for local inference.
+
+```bash
+uv sync
+cp .env.example .env              # add OPENAI_API_KEY if using OpenAI / evaluation
+ollama pull llama3.2:3b           # must match OLLAMA_MODEL_NAME in src/config.py
+```
+
