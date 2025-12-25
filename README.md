@@ -136,3 +136,11 @@ flowchart LR
 docker compose up --build
 ```
 
+### Evaluation
+
+```bash
+uv run python -m src.evaluation.evalute_rag   # needs OPENAI_API_KEY
+```
+
+This samples indexed Q&A pairs, runs them through the graph, and scores the answers with ragas (Faithfulness, FactualCorrectness, LLMContextRecall). HTML reports are written to `evaluation_results/`.
+
