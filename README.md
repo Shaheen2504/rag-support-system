@@ -123,3 +123,16 @@ curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
 | `/answer` | POST | `{"question": str}` → final graph state as JSON |
 | `/health` | GET | `{"status": "ok"}` |
 
+### Docker Compose
+
+```mermaid
+flowchart LR
+    O[ollama<br/>:11434] --> I[data-indexing<br/>builds FAISS index]
+    I -- completed successfully --> B[bot-api<br/>:8000]
+    O --> B
+```
+
+```bash
+docker compose up --build
+```
+
