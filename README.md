@@ -144,3 +144,9 @@ uv run python -m src.evaluation.evalute_rag   # needs OPENAI_API_KEY
 
 This samples indexed Q&A pairs, runs them through the graph, and scores the answers with ragas (Faithfulness, FactualCorrectness, LLMContextRecall). HTML reports are written to `evaluation_results/`.
 
+## Known issues
+
+- `evalute_rag.py` passes `input_scanners=` to `create_workflow`, which doesn't accept that argument.
+- `langgraph.json` references `src/graph/graph.py:app`, but `app` is only defined under `__main__`.
+- docker-compose pulls `llama3.2:1b`, while the config expects `llama3.2:3b`.
+- The Dockerfile `CMD` is malformed (missing comma, wrong module path). Compose overrides it.
