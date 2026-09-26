@@ -101,6 +101,9 @@ Settings live in `src/config.py`, and any of them can be overridden from `.env`:
 | `TEST_FRACTION` | `0.05` | Held-out share, never indexed |
 | `EMBEDDINGS_MODEL_NAME` | `sentence-transformers/all-MiniLM-L6-v2` | Embeddings |
 | `FAISS_TOP_K` | `5` | Retrieved documents |
+| `RETRIEVAL_MODE` | `hybrid_rerank` | `faiss` (baseline), `hybrid` (BM25 + FAISS, RRF), `hybrid_rerank` (+ cross-encoder) |
+| `CANDIDATE_K` | `20` | Candidates per retriever before fusion / rerank |
+| `RERANKER_MODEL_NAME` | `BAAI/bge-reranker-base` | Cross-encoder reranker |
 | `EVALUATION_SAMPLE_SIZE` | `30` | ragas sample size |
 | `LANGCHAIN_API_KEY`, `LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT` | — | Optional LangSmith tracing |
 
@@ -138,6 +141,24 @@ docker compose up --build
 ```
 
 ### Evaluation
+
+Retrieval modes on the held-out split (hit = a retrieved pair shares the test question's intent):
+
+```bash
+uv run python -m src.evaluation.evaluate_retrieval   # writes evaluation_results/retrieval_modes.csv
+```
+
+| Mode | n | intent hit@1 | intent hit@5 | MRR@5 | ms/query (CPU) |
+|---|---|---|---|---|---|
+| faiss | 1169 | 0.9932 | 0.9991 | 0.9959 | 11.4 |
+| hybrid | 1169 | 0.9897 | 1.0000 | 0.9937 | 82.8 |
+| hybrid_rerank | 1169 | 0.9923 | 0.9991 | 0.9954 | 1078.3 |
+
+Held-out questions are paraphrases of indexed ones, so all modes sit at the ceiling. Where the
+upgrade shows is out-of-vocabulary wording: the dataset has no "return" questions, and for
+"I want to return a package, how do I do that?" FAISS retrieves only `delivery_period` pairs
+(bot hands off to a human), while `hybrid_rerank` surfaces a `get_refund` pair and the bot answers.
+
 
 ```bash
 uv run python -m src.evaluation.evaluate_rag   # needs the judge model's API key

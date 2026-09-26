@@ -45,6 +45,12 @@ class Settings(BaseSettings):
 
     FAISS_TOP_K: int = 5
 
+    # Retrieval: "faiss" (baseline), "hybrid" (BM25 + FAISS, RRF fusion),
+    # or "hybrid_rerank" (hybrid candidates reordered by a cross-encoder)
+    RETRIEVAL_MODE: str = "hybrid_rerank"
+    CANDIDATE_K: int = 20  # per-retriever candidates before fusion / rerank
+    RERANKER_MODEL_NAME: str = "BAAI/bge-reranker-base"
+
     # Evaluation settings
     EVALUATION_SAMPLE_SIZE: int = 30
     EVALUATION_LLM_MODEL: str = "openai:gpt-4o-mini"
