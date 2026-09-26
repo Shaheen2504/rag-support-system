@@ -23,7 +23,7 @@ from src.graph.question_check_node import (
 )
 from src.graph.retriever_node import retrieve
 from src.graph.state import AgentState
-from src.graph.topic_check_node import topic_classifier
+from src.graph.router_node import order_status_node, router_node
 from src.graph.utils import load_faiss_index
 
 
@@ -46,17 +46,20 @@ def create_workflow(retriever):
     workflow.add_conditional_edges(
         "question_check_node",
         lambda state: state["question_valid"],
-        {True: "topic_classifier", False: END},
+        {True: "router", False: END},
     )
-    workflow.add_node("topic_classifier", topic_classifier)
+    workflow.add_node("router", router_node)
     workflow.add_conditional_edges(
-        "topic_classifier",
-        lambda state: state["on_topic"],
+        "router",
+        lambda state: state["intent"],
         {
-            "Yes": "retrieve_docs",
-            "No": END,
+            "FAQ": "retrieve_docs",
+            "ORDER": "order_status",
+            "OFF_TOPIC": END,
         },
     )
+    workflow.add_node("order_status", order_status_node)
+    workflow.add_edge("order_status", END)
     workflow.add_node("retrieve_docs", partial(retrieve, faiss_retriever=retriever))
     workflow.add_node("docs_grader", grade_documents_node)
     workflow.add_node("check_language_same", check_language_same)

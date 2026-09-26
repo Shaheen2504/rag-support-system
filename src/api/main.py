@@ -79,7 +79,8 @@ async def answer(question: Question):
         response = {
             "llm_output": state.get("llm_output"),
             "question_valid": state.get("question_valid"),
-            "on_topic": state.get("on_topic"),
+            "intent": state.get("intent"),
+            "order": state.get("order"),
             "answer_valid": state.get("answer_valid", False),
         }
         logger.info(f"Response: {response}")

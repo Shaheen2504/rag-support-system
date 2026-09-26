@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0
     LLM_MAX_TOKENS: int = 300
 
+    # Mock order backend (synthetic data, created on first use)
+    ORDERS_DB_PATH: str = str(DATA_DIR / "orders.db")
+
     # Held-out evaluation split (never indexed)
     TEST_DATA_PATH: str = str(DATA_DIR / "test.csv")
     TEST_FRACTION: float = 0.05

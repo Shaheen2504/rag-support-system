@@ -33,3 +33,5 @@ build/
 /.vscode
 /logs
 /.ruff_cache
+# local mock order DB
+*.db

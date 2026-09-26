@@ -27,9 +27,11 @@ flowchart TD
     S --> TL[scan_token_limit]
     PI & TX & TL --> QC{question_check_node<br/>question_valid?}
     QC -- False --> E1([END: 'Question failed checks'])
-    QC -- True --> TC{topic_classifier<br/>on_topic?}
-    TC -- No --> E2([END])
-    TC -- Yes --> R[retrieve_docs<br/>FAISS top-k = 5]
+    QC -- True --> RT{router<br/>intent?}
+    RT -- OFF_TOPIC --> E2([END: decline])
+    RT -- ORDER --> OS[order_status<br/>get_order_status tool → SQLite]
+    OS --> E4([END])
+    RT -- FAQ --> R[retrieve_docs<br/>hybrid BM25+FAISS + rerank, top 5]
     R --> DG[docs_grader<br/>LLM keeps relevant docs (batched)]
     DG --> GA[generate_answer]
     GA --> LS[check_language_same]
@@ -39,7 +41,7 @@ flowchart TD
     AC --> E3([END])
 ```
 
-The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `on_topic`, `documents`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
+The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `intent`, `order_id`, `order`, `documents`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
 
 ## Request lifecycle
 
@@ -61,6 +63,10 @@ sequenceDiagram
     W-->>A: final state
     A-->>C: JSON (llm_output, answer_valid, ...)
 ```
+
+## Router and order tool
+
+`router` makes one structured-output LLM call that returns `intent` (`FAQ`, `ORDER`, `OFF_TOPIC`) and an optional `order_id`. FAQ goes through the RAG chain; ORDER calls the `get_order_status` tool (`src/orders/db.py`), which reads a local SQLite DB (`data/orders.db`) seeded with synthetic orders 1042–1047 on first use. Order replies are templates over DB fields, so they skip the output scanners.
 
 ## Indexing
 
@@ -124,7 +130,7 @@ curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | GET | Chat web UI |
-| `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, on_topic, answer_valid}` |
+| `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, intent, order, answer_valid}` |
 | `/health` | GET | `{"status": "ok"}` |
 
 ### Docker Compose

@@ -36,3 +36,6 @@ dev = [
     "pylint>=3.3.7",
     "ruff>=0.9.6",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
