@@ -4,6 +4,7 @@ This module contains the FastAPI application that serves the RAG Graph API.
 
 import os
 import warnings
+from uuid import uuid4
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -14,6 +15,9 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import FileResponse
 
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import Command
+
 from src.graph.graph import create_workflow
 from src.graph.utils import load_faiss_index
 
@@ -22,6 +26,11 @@ warnings.filterwarnings("ignore")
 
 class Question(BaseModel):
     question: str
+
+
+class Approval(BaseModel):
+    thread_id: str
+    approved: bool
 
 
 api_context = {}
@@ -35,7 +44,8 @@ async def lifespan(app: FastAPI):
         faisss_index = load_faiss_index()
         # Create the workflow
         logger.info("Creating the workflow...")
-        api_context["workflow"] = create_workflow(faisss_index)
+        # In-memory checkpointer: lets the refund path pause for approval.
+        api_context["workflow"] = create_workflow(faisss_index, checkpointer=MemorySaver())
         yield
     except Exception:
         logger.exception("Failed to load FAISS index and create the workflow.")
@@ -60,29 +70,34 @@ def read_root():
     return FileResponse(static_path + "/index.html")
 
 
+def build_response(graph, config) -> dict:
+    """Answer fields from the thread's state, plus any approval the graph waits on."""
+    snapshot = graph.get_state(config)
+    state = snapshot.values
+    return {
+        "llm_output": state.get("llm_output"),
+        "question_valid": state.get("question_valid"),
+        "intent": state.get("intent"),
+        "order": state.get("order"),
+        "refund": state.get("refund"),
+        "answer_valid": state.get("answer_valid", False),
+        "thread_id": config["configurable"]["thread_id"],
+        "pending_approval": snapshot.interrupts[0].value if snapshot.interrupts else None,
+    }
+
+
 @app.post("/answer")
 async def answer(question: Question):
     """
-    Answer the question.
-
-    Args:
-        question (Question): The question.
-
-    Returns:
-        JSONResponse: The response.
+    Answer the question. Each request runs in a new thread; if a refund needs
+    approval, the response carries `pending_approval` and the `thread_id` to resume.
     """
     try:
-        # Run the workflow
         graph = api_context["workflow"]
+        config = {"configurable": {"thread_id": str(uuid4())}}
         # Graph nodes are sync (LLM Guard, FAISS); run off the event loop.
-        state = await run_in_threadpool(graph.invoke, {"question": question.question})
-        response = {
-            "llm_output": state.get("llm_output"),
-            "question_valid": state.get("question_valid"),
-            "intent": state.get("intent"),
-            "order": state.get("order"),
-            "answer_valid": state.get("answer_valid", False),
-        }
+        await run_in_threadpool(graph.invoke, {"question": question.question}, config)
+        response = build_response(graph, config)
         logger.info(f"Response: {response}")
         return JSONResponse(content=response)
     except Exception:
@@ -91,6 +106,21 @@ async def answer(question: Question):
             status_code=500,
             detail="Failed to answer the question.",
         )
+
+
+@app.post("/approve")
+async def approve(approval: Approval):
+    """Human (support agent) decision on a paused refund; resumes the graph."""
+    graph = api_context["workflow"]
+    config = {"configurable": {"thread_id": approval.thread_id}}
+    if not graph.get_state(config).interrupts:
+        raise HTTPException(status_code=404, detail="No refund awaiting approval.")
+    await run_in_threadpool(
+        graph.invoke, Command(resume={"approved": approval.approved}), config
+    )
+    response = build_response(graph, config)
+    logger.info(f"Approval {approval}: {response}")
+    return JSONResponse(content=response)
 
 
 @app.get("/health")

@@ -31,6 +31,12 @@ flowchart TD
     RT -- OFF_TOPIC --> E2([END: decline])
     RT -- ORDER --> OS[order_status<br/>get_order_status tool → SQLite]
     OS --> E4([END])
+    RT -- REFUND --> RC{refund_check<br/>eligible?}
+    RC -- No --> E5([END: reason])
+    RC -- Yes --> HA[[human_approval<br/>interrupt: graph pauses]]
+    HA -- approved --> PR[process_refund<br/>mock tool → SQLite]
+    HA -- rejected --> RR[refund_rejected]
+    PR & RR --> E6([END])
     RT -- FAQ --> R[retrieve_docs<br/>hybrid BM25+FAISS + rerank, top 5]
     R --> DG[docs_grader<br/>LLM keeps relevant docs (batched)]
     DG --> GA[generate_answer]
@@ -41,7 +47,7 @@ flowchart TD
     AC --> E3([END])
 ```
 
-The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `intent`, `order_id`, `order`, `documents`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
+The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `intent`, `order_id`, `order`, `refund_eligible`, `refund_reason`, `refund_approved`, `refund`, `documents`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
 
 ## Request lifecycle
 
@@ -66,7 +72,24 @@ sequenceDiagram
 
 ## Router and order tool
 
-`router` makes one structured-output LLM call that returns `intent` (`FAQ`, `ORDER`, `OFF_TOPIC`) and an optional `order_id`. FAQ goes through the RAG chain; ORDER calls the `get_order_status` tool (`src/orders/db.py`), which reads a local SQLite DB (`data/orders.db`) seeded with synthetic orders 1042–1047 on first use. Order replies are templates over DB fields, so they skip the output scanners.
+`router` makes one structured-output LLM call that returns `intent` (`FAQ`, `ORDER`, `REFUND`, `OFF_TOPIC`) and an optional `order_id`. FAQ goes through the RAG chain; ORDER calls the `get_order_status` tool (`src/orders/db.py`), which reads a local SQLite DB (`data/orders.db`) seeded with synthetic orders 1042–1047 on first use. Order replies are templates over DB fields, so they skip the output scanners.
+
+## Refund flow
+
+Three separate steps, all on synthetic data (no payment API):
+
+1. **Eligibility** (`refund_check`): looks up the order with `get_order_status` and applies `check_refund_eligibility` (`src/orders/refunds.py`): only orders delivered within the last 30 days and not already refunded qualify. No side effects.
+2. **Human approval** (`human_approval`): calls LangGraph `interrupt()`, so the graph stops and checkpoints (in-memory `MemorySaver` in the API). `/answer` returns `pending_approval` and a `thread_id`; a support agent resumes it with `POST /approve`.
+3. **Execution** (`process_refund`): the only code that refunds. The mock tool re-checks eligibility, inserts a `refunds` row (one per order, `UNIQUE`) and marks the order `refunded`. A rejection runs `refund_rejected` instead and changes nothing.
+
+```bash
+curl -X POST localhost:8000/answer -H 'Content-Type: application/json' -d '{"question": "Can I get a refund for order 1042?"}'
+# → "...waiting for approval by a support agent", pending_approval {...}, thread_id
+curl -X POST localhost:8000/approve -H 'Content-Type: application/json' -d '{"thread_id": "<thread_id>", "approved": true}'
+# → "Your refund of ₹24,999 for order 1042 has been processed. Reference: RF-00001."
+```
+
+Delete `data/orders.db` to reset the demo data. Seed dates are fixed, so order 1042 falls outside the 30-day window after 2026-10-23.
 
 ## Indexing
 
@@ -130,7 +153,8 @@ curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | GET | Chat web UI |
-| `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, intent, order, answer_valid}` |
+| `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, intent, order, refund, answer_valid, thread_id, pending_approval}` |
+| `/approve` | POST | `{"thread_id": str, "approved": bool}` → resumes a paused refund; 404 if nothing is pending |
 | `/health` | GET | `{"status": "ok"}` |
 
 ### Docker Compose

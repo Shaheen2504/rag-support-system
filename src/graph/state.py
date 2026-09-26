@@ -8,9 +8,13 @@ class AgentState(TypedDict):
     question: str
     question_status: Annotated[list, add]
     question_valid: bool
-    intent: str  # FAQ | ORDER | OFF_TOPIC
+    intent: str  # FAQ | ORDER | REFUND | OFF_TOPIC
     order_id: Optional[int]
     order: dict
+    refund_eligible: bool
+    refund_reason: str
+    refund_approved: bool
+    refund: dict
     llm_output: str
     documents: List[dict]
     answer_status: Annotated[list, add]

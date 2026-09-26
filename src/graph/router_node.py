@@ -11,7 +11,7 @@ from src.orders.db import get_order_status
 class RouteQuestion(BaseModel):
     """Structured output for intent routing."""
 
-    intent: Literal["FAQ", "ORDER", "OFF_TOPIC"] = Field(
+    intent: Literal["FAQ", "ORDER", "REFUND", "OFF_TOPIC"] = Field(
         description="Which handler should answer the question."
     )
     order_id: Optional[int] = Field(
@@ -23,6 +23,9 @@ system = """You route customer messages for an online store's support bot.
 
 - ORDER: the user asks about the status, location or delivery of a specific order
   of theirs (e.g. "Where is my order 1042?", "Has my order shipped yet?").
+- REFUND: the user asks for a refund / their money back on a specific order
+  of theirs (e.g. "I want a refund for order 1043"). General questions about
+  the refund policy or how refunds work are FAQ.
 - FAQ: any other customer-support question: accounts, passwords, payments,
   shipping options, cancellations, refunds, returns, invoices, complaints.
 - OFF_TOPIC: anything not about the store or the user's purchases.
@@ -35,7 +38,7 @@ route_prompt = ChatPromptTemplate.from_messages(
 
 
 def router_node(state: AgentState):
-    """Classify the question into FAQ / ORDER / OFF_TOPIC."""
+    """Classify the question into FAQ / ORDER / REFUND / OFF_TOPIC."""
     router = route_prompt | get_llm().with_structured_output(RouteQuestion)
     result = router.invoke({"question": state["question"]})
     update = {"intent": result.intent, "order_id": result.order_id}
@@ -52,6 +55,7 @@ STATUS_TEXT = {
     "out_for_delivery": "is out for delivery and should arrive by {expected_delivery}",
     "delivered": "was delivered on {expected_delivery}",
     "cancelled": "was cancelled",
+    "refunded": "has been refunded",
 }
 
 

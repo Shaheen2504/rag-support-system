@@ -23,12 +23,18 @@ from src.graph.question_check_node import (
 )
 from src.graph.retriever_node import retrieve
 from src.graph.state import AgentState
+from src.graph.refund_node import (
+    human_approval_node,
+    process_refund_node,
+    refund_check_node,
+    refund_rejected_node,
+)
 from src.graph.router_node import order_status_node, router_node
 from src.graph.utils import load_faiss_index
 
 
-def create_workflow(retriever):
-    """Create a workflow."""
+def create_workflow(retriever, checkpointer=None):
+    """Create a workflow. The refund path pauses for approval, which needs a checkpointer."""
     workflow = StateGraph(AgentState)
     workflow.add_node(
         "scan_prompt_injection",
@@ -55,9 +61,26 @@ def create_workflow(retriever):
         {
             "FAQ": "retrieve_docs",
             "ORDER": "order_status",
+            "REFUND": "refund_check",
             "OFF_TOPIC": END,
         },
     )
+    workflow.add_node("refund_check", refund_check_node)
+    workflow.add_conditional_edges(
+        "refund_check",
+        lambda state: state["refund_eligible"],
+        {True: "human_approval", False: END},
+    )
+    workflow.add_node("human_approval", human_approval_node)
+    workflow.add_conditional_edges(
+        "human_approval",
+        lambda state: state["refund_approved"],
+        {True: "process_refund", False: "refund_rejected"},
+    )
+    workflow.add_node("process_refund", process_refund_node)
+    workflow.add_node("refund_rejected", refund_rejected_node)
+    workflow.add_edge("process_refund", END)
+    workflow.add_edge("refund_rejected", END)
     workflow.add_node("order_status", order_status_node)
     workflow.add_edge("order_status", END)
     workflow.add_node("retrieve_docs", partial(retrieve, faiss_retriever=retriever))
@@ -85,7 +108,7 @@ def create_workflow(retriever):
     workflow.add_edge("check_sentiment", "answer_check_node")
     workflow.add_edge("answer_check_node", END)
 
-    graph = workflow.compile()
+    graph = workflow.compile(checkpointer=checkpointer)
     return graph
 
 

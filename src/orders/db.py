@@ -32,6 +32,14 @@ def get_connection() -> sqlite3.Connection:
             expected_delivery TEXT
         )"""
     )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS refunds (
+            refund_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL UNIQUE REFERENCES orders(order_id),
+            amount_inr INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        )"""
+    )
     conn.executemany("INSERT OR IGNORE INTO orders VALUES (?, ?, ?, ?, ?, ?)", SEED_ORDERS)
     conn.commit()
     return conn
