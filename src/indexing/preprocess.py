@@ -2,10 +2,8 @@
 Preprocess the dataset and create a FAISS index.
 """
 
-import os
-
 import polars as pl
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from loguru import logger
@@ -22,7 +20,7 @@ def download_and_preprocess_dataset() -> pl.DataFrame:
     logger.info(f"Loaded dataset with {customer_care_df.height} records.")
 
     # Preprocess the dataset
-    customer_care_df = customer_care_df.select(["instruction", "response"]).rename(
+    customer_care_df = customer_care_df.select(["instruction", "response", "category", "intent"]).rename(
         {"instruction": "question", "response": "answer"}
     )
     customer_care_df = customer_care_df.drop_nulls()
@@ -31,60 +29,49 @@ def download_and_preprocess_dataset() -> pl.DataFrame:
     return customer_care_df
 
 
+def split_train_test(df: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """
+    Hold out a test split that is never indexed. Test rows whose question text
+    also appears in train are dropped, so evaluation can't hit an exact copy.
+    """
+    df = df.with_row_index("row_id").sample(
+        fraction=1.0, shuffle=True, seed=settings.EVALUATION_RANDOM_SEED
+    )
+    n_test = int(df.height * settings.TEST_FRACTION)
+    test, train = df.head(n_test), df.tail(df.height - n_test)
+    train_questions = train["question"].str.to_lowercase().str.strip_chars()
+    test = test.filter(
+        ~pl.col("question").str.to_lowercase().str.strip_chars().is_in(train_questions)
+    )
+    logger.info(f"Split: {train.height} train (indexed), {test.height} held-out test.")
+    return train.drop("row_id"), test.drop("row_id")
+
+
 def generate_documents(customer_care_df: pl.DataFrame) -> list[Document]:
     """Generate documents from a Polars DataFrame."""
     documents = [
-        Document(
-            page_content=row["question"],
-            metadata=row,
-            id=idx,
-        )
-        for idx, row in enumerate(customer_care_df.to_dicts())
+        Document(page_content=row["question"], metadata=row)
+        for row in customer_care_df.to_dicts()
     ]
     logger.info(f"Generated {len(documents)} documents.")
     return documents
 
 
 def create_faiss_index(documents: list[Document]) -> None:
-    """Create or update FAISS index, avoiding duplicates."""
+    """Build the FAISS index from scratch (rebuilds keep it in sync with the split)."""
     embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDINGS_MODEL_NAME)
-    index_path = settings.FAISS_INDEX_PATH
-
-    if os.path.exists(index_path):
-        # Load existing index
-        logger.info("Loading existing FAISS index...")
-        faiss_index = FAISS.load_local(
-            index_path, embeddings, allow_dangerous_deserialization=True
-        )
-        # Get existing document IDs
-        existing_ids = set(faiss_index.index_to_docstore_id.values())
-        # Filter new documents
-        new_docs = [doc for doc in documents if doc.id not in existing_ids]
-        if new_docs:
-            logger.info(f"Adding {len(new_docs)} new documents.")
-            faiss_index.add_documents(new_docs)
-            faiss_index.save_local(index_path)
-            logger.info(f"Updated index saved to {index_path}")
-        else:
-            logger.info("No new documents to add.")
-    else:
-        # Create new index
-        logger.info("Creating new FAISS index...")
-        faiss_index = FAISS.from_documents(documents, embeddings)
-        faiss_index.save_local(index_path)
-        logger.info(f"New index saved to {index_path}")
+    logger.info("Creating FAISS index...")
+    faiss_index = FAISS.from_documents(documents, embeddings)
+    faiss_index.save_local(settings.FAISS_INDEX_PATH)
+    logger.info(f"Index saved to {settings.FAISS_INDEX_PATH}")
 
 
 def embed_and_index():
-    """Embed and index the dataset."""
-    # Download and preprocess the dataset
+    """Download, split, and index the train portion of the dataset."""
     customer_care_df = download_and_preprocess_dataset()
-
-    # Generate documents
-    documents = generate_documents(customer_care_df)
-
-    # Create or update the FAISS index
-    create_faiss_index(documents)
+    train_df, test_df = split_train_test(customer_care_df)
+    test_df.write_csv(settings.TEST_DATA_PATH)
+    create_faiss_index(generate_documents(train_df))
 
 
 if __name__ == "__main__":

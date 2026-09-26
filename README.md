@@ -30,7 +30,7 @@ flowchart TD
     QC -- True --> TC{topic_classifier<br/>on_topic?}
     TC -- No --> E2([END])
     TC -- Yes --> R[retrieve_docs<br/>FAISS top-k = 5]
-    R --> DG[docs_grader<br/>LLM keeps relevant docs]
+    R --> DG[docs_grader<br/>LLM keeps relevant docs (batched)]
     DG --> GA[generate_answer]
     GA --> LS[check_language_same]
     GA --> RL[check_relevance]
@@ -39,7 +39,7 @@ flowchart TD
     AC --> E3([END])
 ```
 
-The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `on_topic`, `documents`, `prompt`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
+The graph state (`src/graph/state.py`) holds `question`, `question_status`, `question_valid`, `on_topic`, `documents`, `llm_output`, `answer_status` and `answer_valid`. The status lists use an `add` reducer, so results from the parallel scanners are merged.
 
 ## Request lifecycle
 
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ## Indexing
 
-`src/indexing/preprocess.py` downloads the Bitext dataset, renames `instruction`/`response` to `question`/`answer` and drops nulls. It then embeds each question as a document (keeping the Q&A pair as metadata) and writes the FAISS index to `data/indexes/faiss_index.faiss`. If the index already exists, only new document IDs are added.
+`src/indexing/preprocess.py` downloads the Bitext dataset, renames `instruction`/`response` to `question`/`answer` and drops nulls. It shuffles (seeded) and holds out `TEST_FRACTION` of rows as `data/test.csv`, dropping any test question whose exact text is also in train. Only the train split is embedded (question as document, Q&A pair as metadata) into `data/indexes/faiss_index.faiss`; the index is rebuilt on every run.
 
 ## Project structure
 
@@ -74,8 +74,8 @@ src/
 ├── api/                   # FastAPI app + static web UI (index.html, script.js, styles.css)
 ├── graph/                 # LangGraph nodes, state, and workflow wiring
 ├── indexing/preprocess.py # dataset download + FAISS index build
-└── evaluation/evalute_rag.py  # ragas evaluation
-data/                      # FAISS index (generated)
+└── evaluation/evaluate_rag.py # ragas evaluation on held-out split
+data/                      # FAISS index + held-out test.csv (generated)
 evaluation_results/        # ragas HTML reports
 ```
 
@@ -85,8 +85,8 @@ Requires Python 3.12 and [uv](https://docs.astral.sh/uv/) (or pip with `requirem
 
 ```bash
 uv sync
-cp .env.example .env              # add OPENAI_API_KEY if using OpenAI / evaluation
-ollama pull llama3.2:3b           # must match OLLAMA_MODEL_NAME in src/config.py
+cp .env.example .env              # set LLM_MODEL + the provider's API key
+ollama pull llama3.2:3b           # only if LLM_MODEL=ollama:...
 ```
 
 ### Configuration
@@ -95,12 +95,13 @@ Settings live in `src/config.py`, and any of them can be overridden from `.env`:
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `OLLAMA_MODEL_NAME` | `llama3.2:3b` | Local LLM |
-| `LLM_MODEL_NAME` | `gpt-4o-mini` | OpenAI model when `local_llm=False` |
-| `LLM_MAX_TOKENS` | `100` | Max answer length for Ollama |
+| `LLM_MODEL` | `ollama:llama3.2:3b` | `provider:model` for `init_chat_model`, e.g. `openai:gpt-4o-mini`, `groq:llama-3.1-8b-instant` |
+| `LLM_MAX_TOKENS` | `300` | Max answer length |
+| `EVALUATION_LLM_MODEL` | `openai:gpt-4o-mini` | ragas judge |
+| `TEST_FRACTION` | `0.05` | Held-out share, never indexed |
 | `EMBEDDINGS_MODEL_NAME` | `sentence-transformers/all-MiniLM-L6-v2` | Embeddings |
 | `FAISS_TOP_K` | `5` | Retrieved documents |
-| `EVALUATION_SAMPLE_SIZE` | `10` | ragas sample size |
+| `EVALUATION_SAMPLE_SIZE` | `30` | ragas sample size |
 | `LANGCHAIN_API_KEY`, `LANGCHAIN_TRACING_V2`, `LANGCHAIN_PROJECT` | — | Optional LangSmith tracing |
 
 ## Running
@@ -120,7 +121,7 @@ curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | GET | Chat web UI |
-| `/answer` | POST | `{"question": str}` → final graph state as JSON |
+| `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, on_topic, answer_valid}` |
 | `/health` | GET | `{"status": "ok"}` |
 
 ### Docker Compose
@@ -139,14 +140,12 @@ docker compose up --build
 ### Evaluation
 
 ```bash
-uv run python -m src.evaluation.evalute_rag   # needs OPENAI_API_KEY
+uv run python -m src.evaluation.evaluate_rag   # needs the judge model's API key
 ```
 
-This samples indexed Q&A pairs, runs them through the graph, and scores the answers with ragas (Faithfulness, FactualCorrectness, LLMContextRecall). HTML reports are written to `evaluation_results/`.
+This samples held-out questions (never indexed), runs them through the graph, and scores the answers with ragas (Faithfulness, FactualCorrectness, LLMContextRecall). HTML reports are written to `evaluation_results/`.
 
 ## Known issues
 
-- `evalute_rag.py` passes `input_scanners=` to `create_workflow`, which doesn't accept that argument.
-- `langgraph.json` references `src/graph/graph.py:app`, but `app` is only defined under `__main__`.
-- docker-compose pulls `llama3.2:1b`, while the config expects `llama3.2:3b`.
-- The Dockerfile `CMD` is malformed (missing comma, wrong module path). Compose overrides it.
+- Output `Sentiment` scanner may reject apologetic support answers.
+- Every request still makes several sequential LLM calls (topic, grading batch, answer).

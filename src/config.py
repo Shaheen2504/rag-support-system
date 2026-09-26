@@ -2,10 +2,8 @@
 
 import os
 from pathlib import Path
-from typing import Union
 
 from dotenv import load_dotenv
-from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -25,33 +23,31 @@ class Settings(BaseSettings):
 
     # Data settings
     DATA_URL: str = (
-        "hf://datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv"
+        "https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/main/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv"
     )
     RAW_DATA_PATH: str = str(DATA_DIR / "customer_care_emails.csv")
     PROCESSED_DATA_PATH: str = str(DATA_DIR / "processed_data.csv")
 
-    # Kaggle settings
-
     # Embeddings settings
     EMBEDDINGS_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
 
-    # LLM settings
-    LLM_MODEL_NAME: str = "gpt-4o-mini"
+    # LLM settings: "<provider>:<model>" for langchain init_chat_model,
+    # e.g. "openai:gpt-4o-mini", "groq:llama-3.1-8b-instant", "ollama:llama3.2:3b"
+    LLM_MODEL: str = "ollama:llama3.2:3b"
     LLM_TEMPERATURE: float = 0
-    LLM_MAX_TOKENS: int = 100
+    LLM_MAX_TOKENS: int = 300
 
-    # Local LLM settings
-    OLLAMA_MODEL_NAME: str = "llama3.2:3b"
+    # Held-out evaluation split (never indexed)
+    TEST_DATA_PATH: str = str(DATA_DIR / "test.csv")
+    TEST_FRACTION: float = 0.05
 
     FAISS_INDEX_PATH: str = str(INDEX_DIR / "faiss_index.faiss")
 
     FAISS_TOP_K: int = 5
 
-    # Open AI API settings
-    OPENAI_API_KEY: Union[SecretStr, None] = None
-
     # Evaluation settings
-    EVALUATION_SAMPLE_SIZE: int = 10
+    EVALUATION_SAMPLE_SIZE: int = 30
+    EVALUATION_LLM_MODEL: str = "openai:gpt-4o-mini"
     EVALUATION_OUTPUT_DIR: str = str(BASE_DIR / "evaluation_results")
     EVALUATION_RANDOM_SEED: int = 123
 

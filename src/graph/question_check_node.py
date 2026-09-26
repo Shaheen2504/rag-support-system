@@ -15,6 +15,11 @@ from src.graph.state import AgentState
 torch.set_float32_matmul_precision("high")
 torch._inductor.config.fx_graph_cache = True
 
+# Build scanners once; constructing them loads models from disk.
+prompt_injection_scanner = PromptInjection(use_onnx=True)
+toxicity_scanner = Toxicity(use_onnx=True)
+token_limit_scanner = TokenLimit(limit=200)
+
 
 def scan_prompt_injection(state: AgentState) -> Dict[str, Any]:
     """
@@ -22,7 +27,7 @@ def scan_prompt_injection(state: AgentState) -> Dict[str, Any]:
     """
     question = state["question"]
 
-    _, results_valid, _ = scan_prompt([PromptInjection(use_onnx=True)], question)
+    _, results_valid, _ = scan_prompt([prompt_injection_scanner], question)
     safe_question = not results_valid.get("PromptInjection", True)
     return {"question_status": [1 if safe_question else 0]}
 
@@ -32,7 +37,7 @@ def scan_toxicity(state: AgentState) -> Dict[str, Any]:
     Scan the input question.
     """
     question = state["question"]
-    _, results_valid, _ = scan_prompt([Toxicity(use_onnx=True)], question)
+    _, results_valid, _ = scan_prompt([toxicity_scanner], question)
     toxic_question = not results_valid.get("Toxicity", True)
     return {"question_status": [1 if toxic_question else 0]}
 
@@ -42,7 +47,7 @@ def scan_token_limit(state: AgentState) -> Dict[str, Any]:
     Scan the token limit.
     """
     question = state["question"]
-    _, results_valid, _ = scan_prompt([TokenLimit(limit=200)], question)
+    _, results_valid, _ = scan_prompt([token_limit_scanner], question)
     token_limit_exceeded = not results_valid.get("TokenLimit", True)
     return {"question_status": [1 if token_limit_exceeded else 0]}
 
@@ -60,10 +65,3 @@ def question_check_node(state: AgentState) -> Dict[str, Any]:
         "question_valid": False,
     }
 
-
-if __name__ == "__main__":
-    state = {"question": "What is the capital of France?"}
-
-    scan_prompt_injection(state)
-    scan_toxicity(state)
-    scan_token_limit(state)

@@ -1,44 +1,33 @@
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
 
-from src.config import settings
 from src.graph.state import AgentState
+from src.graph.utils import get_llm
+
+template = """You are a customer support assistant. Answer the question using only
+the example support conversations below. Reply directly to the customer.
+The examples contain placeholders like {{{{Order Number}}}} or {{{{Website URL}}}};
+never copy a placeholder into your answer, describe the step in general terms instead.
+If the examples do not cover the question, say you will connect them with a human agent.
+
+Examples:
+{context}
+
+Question: {question}
+"""
+prompt = ChatPromptTemplate.from_template(template=template)
 
 
-def generate_answer(question: str, context: list, local_llm: bool = True):
-    """
-    Generate answer to the question based on the context.
-    """
-    if local_llm:
-        llm = ChatOllama(
-            model=settings.OLLAMA_MODEL_NAME,
-            temperature=settings.LLM_TEMPERATURE,
-            max_tokens=settings.LLM_MAX_TOKENS,
-        )
-    else:
-        llm = ChatOpenAI(
-            model=settings.LLM_MODEL_NAME,
-            api_key=settings.OPENAI_API_KEY.get_secret_value(),
-        )
-    template = """Answer the question based only on the following context:
-    {context}
-
-    Question: {question}
-    """
-
-    prompt = ChatPromptTemplate.from_template(template=template)
-    formatted_prompt = prompt.format(question=question, context=context)
-
-    chain = prompt | llm | StrOutputParser()
-    result = chain.invoke({"question": question, "context": context})
-    return result, formatted_prompt
+def format_context(documents: list) -> str:
+    return "\n\n".join(
+        f"Q: {d['question']}\nA: {d['answer']}" for d in documents
+    )
 
 
 def answer_node(state: AgentState):
     """Generate answer node"""
-    question = state["question"]
-    context = state["documents"]
-    answer, prompt = generate_answer(question, context)
-    return {"llm_output": answer, "prompt": prompt}
+    chain = prompt | get_llm() | StrOutputParser()
+    answer = chain.invoke(
+        {"question": state["question"], "context": format_context(state["documents"])}
+    )
+    return {"llm_output": answer}

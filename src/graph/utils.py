@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+from langchain.chat_models import init_chat_model
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from loguru import logger
@@ -5,7 +8,17 @@ from loguru import logger
 from src.config import settings
 
 
-def load_faiss_index() -> FAISS:
+@lru_cache(maxsize=None)
+def get_llm():
+    """Shared chat model, chosen by settings.LLM_MODEL ("provider:model")."""
+    return init_chat_model(
+        settings.LLM_MODEL,
+        temperature=settings.LLM_TEMPERATURE,
+        max_tokens=settings.LLM_MAX_TOKENS,
+    )
+
+
+def load_faiss_index():
     """
     Load the FAISS index.
 

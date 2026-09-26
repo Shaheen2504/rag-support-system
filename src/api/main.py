@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 from starlette.responses import FileResponse
 
 from src.graph.graph import create_workflow
@@ -51,8 +52,6 @@ app = FastAPI(title="Rag Graph API", version="0.1.0", lifespan=lifespan)
 
 
 static_path = os.path.join(os.path.dirname(__file__), "static")
-print(static_path)
-
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 
@@ -75,9 +74,16 @@ async def answer(question: Question):
     try:
         # Run the workflow
         graph = api_context["workflow"]
-        state = graph.invoke({"question": question.question})
-        logger.info(f"Response: {state}")
-        return JSONResponse(content=state)
+        # Graph nodes are sync (LLM Guard, FAISS); run off the event loop.
+        state = await run_in_threadpool(graph.invoke, {"question": question.question})
+        response = {
+            "llm_output": state.get("llm_output"),
+            "question_valid": state.get("question_valid"),
+            "on_topic": state.get("on_topic"),
+            "answer_valid": state.get("answer_valid", False),
+        }
+        logger.info(f"Response: {response}")
+        return JSONResponse(content=response)
     except Exception:
         logger.exception("Failed to answer the question.")
         raise HTTPException(
