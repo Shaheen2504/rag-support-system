@@ -1,0 +1,59 @@
+{
+  "run_at": "2026-09-28T15:13:22",
+  "llm_model": "groq:openai/gpt-oss-120b",
+  "n": 48,
+  "errors": 0,
+  "accuracy": 0.9792,
+  "per_intent_accuracy": {
+    "FAQ": 0.9167,
+    "ORDER": 1.0,
+    "REFUND": 1.0,
+    "OFF_TOPIC": 1.0
+  },
+  "confusion_matrix": {
+    "FAQ": {
+      "FAQ": 11,
+      "ORDER": 1,
+      "REFUND": 0,
+      "OFF_TOPIC": 0,
+      "ERROR": 0
+    },
+    "ORDER": {
+      "FAQ": 0,
+      "ORDER": 12,
+      "REFUND": 0,
+      "OFF_TOPIC": 0,
+      "ERROR": 0
+    },
+    "REFUND": {
+      "FAQ": 0,
+      "ORDER": 0,
+      "REFUND": 12,
+      "OFF_TOPIC": 0,
+      "ERROR": 0
+    },
+    "OFF_TOPIC": {
+      "FAQ": 0,
+      "ORDER": 0,
+      "REFUND": 0,
+      "OFF_TOPIC": 12,
+      "ERROR": 0
+    }
+  },
+  "order_id_extraction": {
+    "questions_with_id": 19,
+    "exact_match": 19,
+    "questions_without_id": 29,
+    "spurious_id_extracted": 0
+  },
+  "misclassified": [
+    {
+      "id": "faq-10",
+      "question": "How can I change the shipping address on order 1044?",
+      "intent": "FAQ",
+      "pred_intent": "ORDER",
+      "error": null
+    }
+  ],
+  "order_id_mismatches": []
+}

@@ -172,6 +172,14 @@ docker compose up --build
 
 ### Evaluation
 
+Router on a hand-labeled set of 48 questions (`evaluation_data/router_eval.json`, 12 per intent, 19 with order IDs), run sequentially with retry/backoff:
+
+```bash
+uv run python -m src.evaluation.evaluate_router   # writes evaluation_results/router_eval_{summary,predictions}.json
+```
+
+With `groq:openai/gpt-oss-120b`: 47/48 correct (FAQ 11/12, ORDER, REFUND, OFF_TOPIC 12/12), order ID exact match 19/19, no IDs invented for the 29 questions without one; two runs gave identical predictions. The miss: "How can I change the shipping address on order 1044?" (labeled FAQ) was routed to ORDER. The set is small and written by the developers, so treat this as a sanity check, not a benchmark.
+
 Retrieval modes on the held-out split (hit = a retrieved pair shares the test question's intent):
 
 ```bash
