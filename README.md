@@ -79,13 +79,14 @@ sequenceDiagram
 Three separate steps, all on synthetic data (no payment API):
 
 1. **Eligibility** (`refund_check`): looks up the order with `get_order_status` and applies `check_refund_eligibility` (`src/orders/refunds.py`): only orders delivered within the last 30 days and not already refunded qualify. No side effects.
-2. **Human approval** (`human_approval`): calls LangGraph `interrupt()`, so the graph stops and checkpoints (in-memory `MemorySaver` in the API). `/answer` returns `pending_approval` and a `thread_id`; a support agent resumes it with `POST /approve`.
+2. **Human approval** (`human_approval`): calls LangGraph `interrupt()`, so the graph stops and checkpoints (in-memory `MemorySaver` in the API). `/answer` returns `pending_approval` and a `thread_id`; a support agent resumes it with `POST /approve`, which requires the `X-API-Key` header to match `APPROVAL_API_KEY` (unset → all approvals refused).
 3. **Execution** (`process_refund`): the only code that refunds. The mock tool re-checks eligibility, inserts a `refunds` row (one per order, `UNIQUE`) and marks the order `refunded`. A rejection runs `refund_rejected` instead and changes nothing.
 
 ```bash
 curl -X POST localhost:8000/answer -H 'Content-Type: application/json' -d '{"question": "Can I get a refund for order 1042?"}'
 # → "...waiting for approval by a support agent", pending_approval {...}, thread_id
-curl -X POST localhost:8000/approve -H 'Content-Type: application/json' -d '{"thread_id": "<thread_id>", "approved": true}'
+curl -X POST localhost:8000/approve -H 'Content-Type: application/json' -H "X-API-Key: $APPROVAL_API_KEY" \
+     -d '{"thread_id": "<thread_id>", "approved": true}'
 # → "Your refund of ₹24,999 for order 1042 has been processed. Reference: RF-00001."
 ```
 
@@ -154,7 +155,7 @@ curl -X POST localhost:8000/answer -H 'Content-Type: application/json' \
 |---|---|---|
 | `/` | GET | Chat web UI |
 | `/answer` | POST | `{"question": str}` → `{llm_output, question_valid, intent, order, refund, answer_valid, thread_id, pending_approval}` |
-| `/approve` | POST | `{"thread_id": str, "approved": bool}` → resumes a paused refund; 404 if nothing is pending |
+| `/approve` | POST | `{"thread_id": str, "approved": bool}` → resumes a paused refund. Requires `X-API-Key: <APPROVAL_API_KEY>` (401 otherwise); 404 if nothing is pending |
 | `/health` | GET | `{"status": "ok"}` |
 
 ### Docker Compose

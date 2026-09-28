@@ -2,8 +2,10 @@
 
 import os
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -39,6 +41,9 @@ class Settings(BaseSettings):
 
     # Mock order backend (synthetic data, created on first use)
     ORDERS_DB_PATH: str = str(DATA_DIR / "orders.db")
+
+    # Required X-API-Key for POST /approve; approvals are refused while unset
+    APPROVAL_API_KEY: Optional[SecretStr] = None
 
     # Held-out evaluation split (never indexed)
     TEST_DATA_PATH: str = str(DATA_DIR / "test.csv")

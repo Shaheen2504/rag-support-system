@@ -3,12 +3,14 @@ This module contains the FastAPI application that serves the RAG Graph API.
 """
 
 import os
+import secrets
 import warnings
 from uuid import uuid4
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from pydantic import BaseModel
@@ -18,6 +20,7 @@ from starlette.responses import FileResponse
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 
+from src.config import settings
 from src.graph.graph import create_workflow
 from src.graph.utils import load_faiss_index
 
@@ -108,7 +111,21 @@ async def answer(question: Question):
         )
 
 
-@app.post("/approve")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def require_approval_key(api_key: str | None = Depends(api_key_header)) -> None:
+    """Only support agents holding APPROVAL_API_KEY may approve refunds. Fails closed if unset."""
+    expected = settings.APPROVAL_API_KEY
+    if (
+        expected is None
+        or api_key is None
+        or not secrets.compare_digest(api_key, expected.get_secret_value())
+    ):
+        raise HTTPException(status_code=401, detail="Invalid or missing API key.")
+
+
+@app.post("/approve", dependencies=[Depends(require_approval_key)])
 async def approve(approval: Approval):
     """Human (support agent) decision on a paused refund; resumes the graph."""
     graph = api_context["workflow"]
