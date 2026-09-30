@@ -2,11 +2,13 @@
 Refund flow: eligibility check → human approval (graph pauses) → execution.
 """
 
+from datetime import date
+
 from langgraph.types import interrupt
 
 from src.graph.state import AgentState
 from src.orders.db import get_order_status
-from src.orders.refunds import check_refund_eligibility, process_refund, today
+from src.orders.refunds import check_refund_eligibility, process_refund
 
 
 def refund_check_node(state: AgentState):
@@ -19,7 +21,7 @@ def refund_check_node(state: AgentState):
             "answer_valid": True,
         }
     order = get_order_status.invoke({"order_id": order_id})
-    eligible, reason = check_refund_eligibility(order, today())
+    eligible, reason = check_refund_eligibility(order, date.today())
     if order["status"] == "not_found":
         message = f"I couldn't find order {order_id}. Please check the number."
     elif not eligible:

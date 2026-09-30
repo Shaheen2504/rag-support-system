@@ -1,21 +1,28 @@
 """Mock order backend: a small SQLite database seeded with synthetic orders."""
 
 import sqlite3
+from datetime import date, timedelta
 
 from langchain_core.tools import tool
 
 from src.config import settings
 
-# Synthetic data only; no real customers.
+# Synthetic data only; no real customers. Dates are days relative to when the
+# DB is first created, so the refund demo (1042 inside the 30-day window, 1047
+# outside it) never goes stale.
 SEED_ORDERS = [
     # order_id, item, amount_inr, status, order_date, expected_delivery
-    (1042, "Smartphone X2", 24999, "delivered", "2026-09-18", "2026-09-23"),
-    (1043, "Wireless Earbuds", 3499, "shipped", "2026-09-22", "2026-09-29"),
-    (1044, "Laptop Stand", 1299, "processing", "2026-09-25", "2026-10-02"),
-    (1045, "USB-C Charger", 899, "cancelled", "2026-09-20", None),
-    (1046, "Smartwatch S", 8999, "out_for_delivery", "2026-09-21", "2026-09-27"),
-    (1047, "Bluetooth Speaker", 2799, "delivered", "2026-08-10", "2026-08-15"),
+    (1042, "Smartphone X2", 24999, "delivered", -12, -7),
+    (1043, "Wireless Earbuds", 3499, "shipped", -3, 3),
+    (1044, "Laptop Stand", 1299, "processing", -1, 6),
+    (1045, "USB-C Charger", 899, "cancelled", -10, None),
+    (1046, "Smartwatch S", 8999, "out_for_delivery", -5, 0),
+    (1047, "Bluetooth Speaker", 2799, "delivered", -50, -45),
 ]
+
+
+def _day(offset: int | None) -> str | None:
+    return None if offset is None else (date.today() + timedelta(days=offset)).isoformat()
 
 
 def get_connection() -> sqlite3.Connection:
@@ -40,7 +47,10 @@ def get_connection() -> sqlite3.Connection:
             created_at TEXT NOT NULL
         )"""
     )
-    conn.executemany("INSERT OR IGNORE INTO orders VALUES (?, ?, ?, ?, ?, ?)", SEED_ORDERS)
+    conn.executemany(
+        "INSERT OR IGNORE INTO orders VALUES (?, ?, ?, ?, ?, ?)",
+        [(*o[:4], _day(o[4]), _day(o[5])) for o in SEED_ORDERS],
+    )
     conn.commit()
     return conn
 

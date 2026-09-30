@@ -16,11 +16,6 @@ from src.orders.db import get_connection
 REFUND_WINDOW_DAYS = 30
 
 
-def today() -> date:
-    """Current date; tests patch this to pin the refund window."""
-    return date.today()
-
-
 def check_refund_eligibility(order: dict, today: date) -> tuple[bool, str]:
     """Return (eligible, reason) for a refund on `order` under the synthetic policy."""
     status = order["status"]
@@ -44,7 +39,7 @@ def process_refund(order_id: int) -> dict:
     with get_connection() as conn:
         row = conn.execute("SELECT * FROM orders WHERE order_id = ?", (order_id,)).fetchone()
         order = dict(row) if row else {"order_id": order_id, "status": "not_found"}
-        eligible, reason = check_refund_eligibility(order, today())
+        eligible, reason = check_refund_eligibility(order, date.today())
         if not eligible:
             return {"order_id": order_id, "status": "refused", "reason": reason}
         cur = conn.execute(

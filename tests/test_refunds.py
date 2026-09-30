@@ -1,17 +1,9 @@
 from datetime import date
 
-import pytest
-
-from src.orders import refunds
 from src.orders.db import get_order_status
 from src.orders.refunds import check_refund_eligibility, process_refund
 
 TODAY = date(2026, 9, 27)
-
-
-@pytest.fixture(autouse=True)
-def pinned_today(monkeypatch):
-    monkeypatch.setattr(refunds, "today", lambda: TODAY)
 
 
 def order(status, delivered="2026-09-23"):
