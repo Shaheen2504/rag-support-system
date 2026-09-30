@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # e.g. "openai:gpt-4o-mini", "groq:llama-3.1-8b-instant", "ollama:llama3.2:3b"
     LLM_MODEL: str = "ollama:llama3.2:3b"
     LLM_TEMPERATURE: float = 0
-    LLM_MAX_TOKENS: int = 300
+    LLM_MAX_TOKENS: int = 1024
 
     # Mock order backend (synthetic data, created on first use)
     ORDERS_DB_PATH: str = str(DATA_DIR / "orders.db")
