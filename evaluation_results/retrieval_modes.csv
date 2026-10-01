@@ -1,0 +1,4 @@
+mode,n,intent_hit@1,intent_hit@5,mrr@5,ms_per_query
+faiss,1169,0.9932,0.9991,0.9959,11.4
+hybrid,1169,0.9897,1.0,0.9937,82.8
+hybrid_rerank,1169,0.9923,0.9991,0.9954,1078.3

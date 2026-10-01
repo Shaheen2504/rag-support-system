@@ -3,7 +3,7 @@ from typing import Any, Dict
 import torch
 import torch._inductor.config
 from llm_guard import scan_output
-from llm_guard.output_scanners import LanguageSame, Relevance, Sentiment
+from llm_guard.output_scanners import LanguageSame, Relevance, Toxicity
 
 from src.graph.state import AgentState
 
@@ -12,7 +12,7 @@ torch._inductor.config.fx_graph_cache = True
 
 language_same_scanner = LanguageSame(use_onnx=True)
 relevance_scanner = Relevance(use_onnx=True)
-sentiment_scanner = Sentiment()
+toxicity_scanner = Toxicity(use_onnx=True)
 
 
 def check_language_same(state: AgentState) -> Dict[str, Any]:
@@ -37,19 +37,20 @@ def check_relevance(state: AgentState) -> Dict[str, Any]:
     return {"answer_status": [1 if relevant_answer else 0]}
 
 
-def check_sentiment(state: AgentState) -> Dict[str, Any]:
-    """Run Sentiment check"""
+def check_toxicity(state: AgentState) -> Dict[str, Any]:
+    """Run output Toxicity check (a classifier, so apologetic wording isn't flagged)."""
     output = state["llm_output"]
     prompt = state["question"]
     _, results_valid, _ = scan_output(
-        scanners=[sentiment_scanner], output=output, prompt=prompt
+        scanners=[toxicity_scanner], output=output, prompt=prompt
     )
-    sentiment = not results_valid.get("Sentiment", True)
-    return {"answer_status": [1 if sentiment else 0]}
+    toxic_answer = not results_valid.get("Toxicity", True)
+    return {"answer_status": [1 if toxic_answer else 0]}
 
 
 def answer_check_node(state: AgentState) -> Dict[str, Any]:
-    """Run all answer checks"""
+    """Run all answer checks (language, relevance, toxicity). No sentiment check: apologetic
+    support answers score as negative as abusive text, so it only blocked valid answers."""
     answer_status = state["answer_status"]
     answer = state["llm_output"]
     all_checks_passed = all(status == 0 for status in answer_status[-3:])

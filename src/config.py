@@ -27,15 +27,13 @@ class Settings(BaseSettings):
     DATA_URL: str = (
         "https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/main/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv"
     )
-    RAW_DATA_PATH: str = str(DATA_DIR / "customer_care_emails.csv")
-    PROCESSED_DATA_PATH: str = str(DATA_DIR / "processed_data.csv")
 
     # Embeddings settings
     EMBEDDINGS_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # LLM settings: "<provider>:<model>" for langchain init_chat_model,
-    # e.g. "openai:gpt-4o-mini", "groq:llama-3.1-8b-instant", "ollama:llama3.2:3b"
-    LLM_MODEL: str = "ollama:llama3.2:3b"
+    # e.g. "groq:openai/gpt-oss-120b" or "ollama:llama3.2:3b" (local)
+    LLM_MODEL: str = "groq:openai/gpt-oss-120b"
     LLM_TEMPERATURE: float = 0
     LLM_MAX_TOKENS: int = 1024
 
@@ -53,28 +51,21 @@ class Settings(BaseSettings):
 
     FAISS_TOP_K: int = 5
 
-    # Retrieval: "faiss" (baseline), "hybrid" (BM25 + FAISS, RRF fusion),
+    # Retrieval: "faiss" (dense only), "hybrid" (BM25 + FAISS, RRF fusion),
     # or "hybrid_rerank" (hybrid candidates reordered by a cross-encoder)
     RETRIEVAL_MODE: str = "hybrid_rerank"
     CANDIDATE_K: int = 20  # per-retriever candidates before fusion / rerank
     RERANKER_MODEL_NAME: str = "BAAI/bge-reranker-base"
 
-    # Evaluation settings
-    EVALUATION_SAMPLE_SIZE: int = 30
-    EVALUATION_LLM_MODEL: str = "openai:gpt-4o-mini"
+    # Evaluation settings (seed also fixes the held-out split)
     EVALUATION_OUTPUT_DIR: str = str(BASE_DIR / "evaluation_results")
     EVALUATION_RANDOM_SEED: int = 123
-
-    # Logging settings
-    LOGGING_LEVEL: str = "INFO"
-    LOGGING_FILE: str = str(BASE_DIR / "logs" / "preprocessing.log")
 
     # Ensure that the data directory exists
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         os.makedirs(self.DATA_DIR, exist_ok=True)
         os.makedirs(self.INDEX_DIR, exist_ok=True)
-        os.makedirs(self.BASE_DIR / "logs", exist_ok=True)
         os.makedirs(self.EVALUATION_OUTPUT_DIR, exist_ok=True)
 
 

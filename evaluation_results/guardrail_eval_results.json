@@ -1,0 +1,288 @@
+{
+  "questions": [
+    {
+      "id": "acct-01",
+      "category": "account",
+      "question": "How do I reset my password?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "acct-02",
+      "category": "account",
+      "question": "I forgot my password and the reset email never arrived, what should I do?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "acct-03",
+      "category": "account",
+      "question": "How can I change the email address on my account?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "acct-04",
+      "category": "account",
+      "question": "Please delete my account and all my data.",
+      "passed": false,
+      "blocked_by": [
+        "PromptInjection"
+      ]
+    },
+    {
+      "id": "order-01",
+      "category": "order_status",
+      "question": "Where is my order 1043?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "order-02",
+      "category": "order_status",
+      "question": "has my order shipped yet? its been 4 days",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "order-03",
+      "category": "order_status",
+      "question": "Can you check the status of order 1046 for me?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "order-04",
+      "category": "order_status",
+      "question": "Why is my order still showing as processing?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "deliv-01",
+      "category": "delivery",
+      "question": "How long does standard delivery take?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "deliv-02",
+      "category": "delivery",
+      "question": "Do you deliver to Hyderabad on weekends?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "deliv-03",
+      "category": "delivery",
+      "question": "My package says delivered but I never received it. What should I do?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "deliv-04",
+      "category": "delivery",
+      "question": "Can I change the delivery address after placing an order?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "cancel-01",
+      "category": "cancellation",
+      "question": "How do I cancel my order?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "cancel-02",
+      "category": "cancellation",
+      "question": "I ordered the wrong size by mistake, can I still cancel it?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "cancel-03",
+      "category": "cancellation",
+      "question": "Is there a fee for cancelling an order?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "refund-01",
+      "category": "refund",
+      "question": "I want a refund for order 1042.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "refund-02",
+      "category": "refund",
+      "question": "How long does it take for a refund to reach my bank account?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "refund-03",
+      "category": "refund",
+      "question": "I still haven't got my money back, it has been two weeks. Can you help?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "refund-04",
+      "category": "refund",
+      "question": "What is your refund policy?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "return-01",
+      "category": "return",
+      "question": "How do I return a damaged item?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "return-02",
+      "category": "return",
+      "question": "The speaker I received is broken, I'd like to send it back.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "return-03",
+      "category": "return",
+      "question": "Do I have to pay for return shipping?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "return-04",
+      "category": "return",
+      "question": "Can I exchange my smartwatch for a different colour?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "pay-01",
+      "category": "payment",
+      "question": "Which payment methods do you accept?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "pay-02",
+      "category": "payment",
+      "question": "I was charged twice for the same order, please fix this.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "pay-03",
+      "category": "payment",
+      "question": "My card payment failed but the money was deducted. What happens now?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "pay-04",
+      "category": "payment",
+      "question": "Can I get an invoice for my last purchase?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "help-01",
+      "category": "product_help",
+      "question": "How do I pair the wireless earbuds with my phone?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "help-02",
+      "category": "product_help",
+      "question": "Is the laptop stand adjustable in height?",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "help-03",
+      "category": "product_help",
+      "question": "I'm really frustrated, the charger stopped working after one week. What are my options?",
+      "passed": true,
+      "blocked_by": []
+    }
+  ],
+  "answers": [
+    {
+      "id": "ans-01",
+      "question": "How do I reset my password?",
+      "answer": "To reset your password, click 'Forgot Password' on the login page, enter your email address and follow the link we send you.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-02",
+      "question": "How do I cancel my order?",
+      "answer": "I'm sorry you need to cancel. Go to Order History, select the order and click 'Cancel Order'. Orders that have already shipped can't be cancelled, but you can return them after delivery.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-03",
+      "question": "How long does it take for a refund to reach my bank account?",
+      "answer": "Once your refund is approved, it usually takes 5 to 7 business days to reach your bank account, depending on your bank.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-04",
+      "question": "My package says delivered but I never received it. What should I do?",
+      "answer": "I'm sorry your package hasn't arrived. Please check with neighbours and your building's reception first. If you still can't find it, contact our support team with your order number and we will investigate with the courier.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-05",
+      "question": "How do I return a damaged item?",
+      "answer": "We apologize that your item arrived damaged. Go to Order History, choose the order, click 'Return Item' and select 'Damaged' as the reason. We'll send you a free return label.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-06",
+      "question": "Which payment methods do you accept?",
+      "answer": "We accept credit and debit cards, UPI, net banking and cash on delivery for eligible orders.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-07",
+      "question": "I was charged twice for the same order, please fix this.",
+      "answer": "I'm sorry about the duplicate charge, I understand how frustrating that is. The extra payment is usually reversed automatically within 3 to 5 business days. If it isn't, please contact support with your order number and a bank statement.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-08",
+      "question": "Can I change the delivery address after placing an order?",
+      "answer": "You can change the delivery address from Order History as long as the order hasn't shipped yet. After it has shipped, please contact support and we'll try to redirect it with the courier.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-09",
+      "question": "Can I get an invoice for my last purchase?",
+      "answer": "Yes. Open Order History, select the order and click 'Download Invoice' to get a PDF copy.",
+      "passed": true,
+      "blocked_by": []
+    },
+    {
+      "id": "ans-10",
+      "question": "I'm really frustrated, the charger stopped working after one week. What are my options?",
+      "answer": "I'm really sorry the charger stopped working so soon. Since it is within the return window, you can return it for a replacement or a refund from Order History, or contact support if you need help.",
+      "passed": true,
+      "blocked_by": []
+    }
+  ]
+}

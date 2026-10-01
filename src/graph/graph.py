@@ -11,7 +11,7 @@ from src.graph.answer_check_node import (
     answer_check_node,
     check_language_same,
     check_relevance,
-    check_sentiment,
+    check_toxicity,
 )
 from src.graph.answer_node import answer_node
 from src.graph.docs_grader_node import grade_documents_node
@@ -87,7 +87,7 @@ def create_workflow(retriever, checkpointer=None):
     workflow.add_node("docs_grader", grade_documents_node)
     workflow.add_node("check_language_same", check_language_same)
     workflow.add_node("check_relevance", check_relevance)
-    workflow.add_node("check_sentiment", check_sentiment)
+    workflow.add_node("check_toxicity", check_toxicity)
     workflow.add_node("answer_check_node", answer_check_node)
 
     workflow.add_node("generate_answer", answer_node)
@@ -102,10 +102,10 @@ def create_workflow(retriever, checkpointer=None):
     workflow.add_edge("docs_grader", "generate_answer")
     workflow.add_edge("generate_answer", "check_language_same")
     workflow.add_edge("generate_answer", "check_relevance")
-    workflow.add_edge("generate_answer", "check_sentiment")
+    workflow.add_edge("generate_answer", "check_toxicity")
     workflow.add_edge("check_language_same", "answer_check_node")
     workflow.add_edge("check_relevance", "answer_check_node")
-    workflow.add_edge("check_sentiment", "answer_check_node")
+    workflow.add_edge("check_toxicity", "answer_check_node")
     workflow.add_edge("answer_check_node", END)
 
     graph = workflow.compile(checkpointer=checkpointer)

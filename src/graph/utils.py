@@ -31,7 +31,7 @@ def bm25_tokenize(text: str) -> list[str]:
 def load_faiss_index(mode: str | None = None):
     """
     Load the retriever for `mode` (defaults to settings.RETRIEVAL_MODE):
-    "faiss" baseline, "hybrid" BM25+FAISS, or "hybrid_rerank".
+    "faiss" dense only, "hybrid" BM25+FAISS, or "hybrid_rerank".
     """
     mode = mode or settings.RETRIEVAL_MODE
     try:
