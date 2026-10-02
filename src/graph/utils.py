@@ -84,4 +84,3 @@ def load_faiss_index(mode: str | None = None):
             base_compressor=reranker, base_retriever=hybrid
         )
     raise ValueError(f"Unknown RETRIEVAL_MODE: {mode}")
-

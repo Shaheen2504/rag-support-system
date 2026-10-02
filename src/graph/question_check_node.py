@@ -64,4 +64,3 @@ def question_check_node(state: AgentState) -> Dict[str, Any]:
         "llm_output": "Question failed checks, please try again.",
         "question_valid": False,
     }
-
